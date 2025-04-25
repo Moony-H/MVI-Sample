@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -28,10 +29,13 @@ abstract class MVIViewModel<INTENT : Intent, UI_STATE : UIState, SIDE_EFFECT : S
     private val _sideEffects = Channel<SIDE_EFFECT>(Channel.BUFFERED)
     val sideEffects: Flow<SIDE_EFFECT> = _sideEffects.receiveAsFlow()
 
-    private val _uiState: MutableStateFlow<UI_STATE> by lazy {
+    private val _uiStateFlow: MutableStateFlow<UI_STATE> by lazy {
         MutableStateFlow(initialState)
     }
-    val uiState: Flow<UI_STATE> = _uiState
+
+    val uiState by lazy {
+        _uiStateFlow.asStateFlow()
+    }
 
     abstract val initialState: UI_STATE
 
@@ -51,7 +55,7 @@ abstract class MVIViewModel<INTENT : Intent, UI_STATE : UIState, SIDE_EFFECT : S
 
 
     protected fun postUIState(executor: UI_STATE.() -> UI_STATE) {
-        _uiState.update { executor(it) }
+        _uiStateFlow.update { executor(it) }
     }
 
     fun postSideEffect(sideEffect: SIDE_EFFECT) {
