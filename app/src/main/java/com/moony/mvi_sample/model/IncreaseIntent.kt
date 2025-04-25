@@ -7,4 +7,5 @@ sealed class MainIntent : Intent {
     data object Increase : MainIntent()
     data object Decrease : MainIntent()
     data object Reset : MainIntent()
+    data object SideEffect : MainIntent()
 }

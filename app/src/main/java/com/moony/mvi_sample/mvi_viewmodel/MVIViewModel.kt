@@ -1,20 +1,21 @@
-package com.moony.mvi_sample
+package com.moony.mvi_sample.mvi_viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.moony.mvi_sample.model.foundation.Intent
 import com.moony.mvi_sample.model.foundation.SideEffect
 import com.moony.mvi_sample.model.foundation.UIState
+import com.moony.mvi_sample.throttleFirst
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 abstract class MVIViewModel<INTENT : Intent, UI_STATE : UIState, SIDE_EFFECT : SideEffect> :
     ViewModel() {
@@ -34,7 +35,7 @@ abstract class MVIViewModel<INTENT : Intent, UI_STATE : UIState, SIDE_EFFECT : S
 
     abstract val initialState: UI_STATE
 
-    abstract fun handleIntent(intent: INTENT)
+    abstract suspend fun handleIntent(intent: INTENT)
 
 
     init {
@@ -43,9 +44,10 @@ abstract class MVIViewModel<INTENT : Intent, UI_STATE : UIState, SIDE_EFFECT : S
         }.launchIn(viewModelScope)
     }
 
-    fun postIntent(intent: INTENT) {
-        intents.tryEmit(intent)
-    }
+    fun postIntent(intent: INTENT) =
+        viewModelScope.launch {
+            intents.emit(intent)
+        }
 
 
     protected fun postUIState(executor: UI_STATE.() -> UI_STATE) {
@@ -55,16 +57,7 @@ abstract class MVIViewModel<INTENT : Intent, UI_STATE : UIState, SIDE_EFFECT : S
     fun postSideEffect(sideEffect: SIDE_EFFECT) {
         _sideEffects.trySend(sideEffect)
     }
-
 }
 
-fun <T> Flow<T>.throttleFirst(millis: Long): Flow<T> = channelFlow {
-    var lastEmissionTime = 0L
-    collect { value ->
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastEmissionTime >= millis) {
-            lastEmissionTime = currentTime
-            trySend(value)
-        }
-    }
-}
+
+
