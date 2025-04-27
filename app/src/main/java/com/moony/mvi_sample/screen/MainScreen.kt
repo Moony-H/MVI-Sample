@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.moony.mvi_sample.model.MainIntent
 import com.moony.mvi_sample.model.MainSideEffect
@@ -26,7 +27,7 @@ import com.moony.mvi_sample.mvi_viewmodel.collectSideEffect
 fun MainScreen(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues = PaddingValues(),
-    viewModel: MainViewModel = viewModel()
+    viewModel: MainViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.collectAsState()
     val context = LocalContext.current
